@@ -205,4 +205,17 @@ class Bot:
             handler: Функция-обработчик ошибок
         """
         self.handle_error = handler
-        return self 
+        return self
+        
+    def set_my_commands(self, commands: Dict[str, str]) -> Dict[str, Any]:
+        """
+        Устанавливает команды для бота в удобном формате
+        
+        Args:
+            commands: Словарь команд в формате {"command": "description"}
+            
+        Returns:
+            Результат запроса PATCH /me
+        """
+        commands_list = [{"name": name, "description": description} for name, description in commands.items()]
+        return self.api.set_my_commands(commands_list) 

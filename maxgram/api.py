@@ -33,19 +33,15 @@ class Api:
     
     def set_my_commands(self, commands: List[Dict[str, str]]) -> Dict[str, Any]:
         """
-        Устанавливает команды для бота
-        
-        Примечание: этот метод не реализован в API Max, но оставлен для совместимости.
-        В текущей версии API Max команды можно установить только через MasterBot.
+        Устанавливает команды для бота через PATCH /me
         
         Args:
             commands: Список команд в формате [{"name": "command", "description": "Description"}]
             
         Returns:
-            Заглушка для совместимости
+            Результат запроса PATCH /me
         """
-        # Возвращаем пустой словарь для совместимости, так как метод не реализован в API
-        return {}
+        return self.client.request("PATCH", "/me", data={"commands": commands})
     
     def send_message(self, chat_id: int, text: str, attachments: Optional[List[Dict[str, Any]]] = None) -> Dict[str, Any]:
         """
