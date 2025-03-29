@@ -81,14 +81,17 @@ class Api:
         Returns:
             Результат операции
         """
-        data = {
+        # Параметры запроса с callback_id
+        params = {
             "callback_id": callback_id
         }
         
+        # Тело запроса с уведомлением
+        data = {}
         if text:
-            data["text"] = text
+            data["notification"] = text
         
-        return self.client.request("POST", "/answers", data=data)
+        return self.client.request("POST", "/answers", params=params, data=data)
     
     def get_updates(self, allowed_updates: List[str], extra: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """

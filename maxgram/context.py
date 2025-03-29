@@ -3,6 +3,7 @@
 """
 
 from typing import Dict, Any, Optional, List, Union
+import logging
 
 from maxgram.types import Update, Message, UpdateType
 
@@ -25,6 +26,9 @@ class Context:
         self.update = update
         self.api = api
         
+        # Логируем структуру обновления для диагностики
+        logging.getLogger(__name__).debug(f"Context init with update: {update}")
+        
         # Устанавливаем свойства в зависимости от типа обновления
         self.update_type = update.get('update_type')
         self.chat_id = update.get('chat_id')
@@ -32,6 +36,14 @@ class Context:
         self.message = update.get('message')
         self.callback_id = update.get('callback_id')
         self.payload = update.get('payload')
+        
+        # Если callback_id не указан в корне обновления, но это callback-обновление
+        if not self.callback_id and self.update_type == 'message_callback' and 'callback' in update:
+            # Извлекаем callback_id из вложенной структуры
+            self.callback_id = update['callback'].get('callback_id')
+            # Если payload не задан, но есть в callback
+            if not self.payload and 'payload' in update['callback']:
+                self.payload = update['callback'].get('payload')
         
         # Если chat_id не указан в корне обновления
         if not self.chat_id:

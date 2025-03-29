@@ -14,7 +14,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(level
 logger = logging.getLogger(__name__)
 
 # Получение токена из переменной окружения
-TOKEN = os.getenv("BOT_TOKEN")
+TOKEN = "f9LHodD0cOLxCsVYq1ooE9uDuaMrtazHuNBTkmlC8DbIrQ4hXs5UedYzgcTma3JSZHR3W_hlxwYv3ySlopom"
 if not TOKEN:
     logger.error("Пожалуйста, установите переменную окружения MAX_BOT_TOKEN")
     exit(1)
@@ -61,16 +61,20 @@ def keyboard_command(ctx):
 # Обработчик нажатий на кнопки
 @bot.on("message_callback")
 def handle_callback(ctx):
+    logger = logging.getLogger(__name__)
+    logger.info(f"Received callback with update: {ctx.update}")
+    logger.info(f"Callback ID: {ctx.callback_id}, Payload: {ctx.payload}")
+    
     payload = ctx.payload
     
     if payload == "button1":
-        ctx.answer_callback("Вы нажали на кнопку 1")
+        ctx.answer_callback("1212")
         ctx.reply("Вы выбрали первую опцию")
     elif payload == "button2":
-        ctx.answer_callback("Вы нажали на кнопку 2")
+        ctx.answer_callback("23233")
         ctx.reply("Вы выбрали вторую опцию")
     elif payload == "button3":
-        ctx.answer_callback("Вы нажали на кнопку 3")
+        ctx.answer_callback("323232")
         ctx.reply("Вы выбрали третью опцию")
     else:
         ctx.answer_callback(f"Неизвестная кнопка: {payload}")
@@ -79,7 +83,7 @@ def handle_callback(ctx):
 if __name__ == "__main__":
     try:
         logger.info("Запуск бота...")
-        asyncio.run(bot.start())
+        bot.run()
     except KeyboardInterrupt:
         logger.info("Остановка бота...")
         bot.stop()

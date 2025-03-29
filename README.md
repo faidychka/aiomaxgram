@@ -15,14 +15,14 @@ pip install maxgram
 ```
 
 ### Получение токена
-Откройте диалог с [MasterBot](https://max.ru/masterbot), следуйте инструкциям и создайте нового бота. После создания бота MasterBot отправит вам токен.
+Откройте диалог с [MasterBot](https://max.ru/masterbot), следуйте инструкциям и создайте нового бота. После создания бота MasterBot отправит вам токен. Используйте его в коде ниже вместо YOUR_BOT_TOKEN
 
-### Пример пинг-понг эхо-бота
+### Пример эхо-бота
 ```python
 from maxgram import Bot
 
 # Инициализация бота
-bot = Bot("BOT_TOKEN")
+bot = Bot("YOUR_BOT_TOKEN")
 
 # Обработчик события запуска бота
 @bot.on("bot_started")
