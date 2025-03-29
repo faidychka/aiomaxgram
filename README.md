@@ -1,9 +1,11 @@
 # Maxgram
-v0.1.3 от 29.03.2025
+v0.1.4 от 29.03.2025
 
-Python клиент (неофициальный) для [API MAX](https://dev.max.ru/)
+https://pypi.org/project/maxgram/
 
-Внимание! Разработка в ранней стадии. Сейчас поддерживаются: прием и отправка сообщений, инлайн-клавиатура.
+Python-клиент (неофициальный) для [API MAX](https://dev.max.ru/)
+
+Внимание! Разработка в ранней стадии. Сейчас поддерживаются: прием и отправка сообщений, инлайн-кнопки.
 
 > Обсудить в [MAX DevChat](https://max.ru/join/xzUCRiPjt_G7EaLtKLe7PgT69GPRP51BHHEv7n5W7J0) - комьюнити разработчиков ботов и приложений MAX
 
@@ -16,6 +18,13 @@ Python клиент (неофициальный) для [API MAX](https://dev.ma
 pip install maxgram
 ```
 
+если нужно обновление, то
+
+```sh
+pip install maxgram --upgrade
+```
+
+
 ### 2. Получение токена
 Откройте диалог с [MasterBot](https://max.ru/masterbot), следуйте инструкциям и создайте нового бота. После создания бота MasterBot отправит вам токен. Используйте его в коде ниже вместо YOUR_BOT_TOKEN
 
@@ -23,7 +32,7 @@ pip install maxgram
 ```python
 from maxgram import Bot
 
-# Инициализация бота
+# Инициализация бота (рекомендуется получать через .env)
 bot = Bot("YOUR_BOT_TOKEN")
 
 # Обработчик события запуска бота
@@ -76,7 +85,7 @@ bot.set_my_commands({
 
 ### 5. Работа с клавиатурой
 
-* Полный пример смотрите [keyboard_bot.py](https://github.com/kayumovru/maxgram/tree/master/keyboard_bot.py)
+* Полный пример смотрите [keyboard_bot.py](https://github.com/kayumovru/maxgram/tree/master/examples/keyboard_bot.py)
 
 ![menu_example](figures/menu_example.jpg)
 
