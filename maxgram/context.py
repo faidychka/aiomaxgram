@@ -4,6 +4,7 @@
 
 from typing import Dict, Any, Optional, List, Union
 import logging
+import time
 
 from maxgram.types import Update, Message, UpdateType
 
@@ -54,13 +55,14 @@ class Context:
             elif self.message and 'chat_id' in self.message:
                 self.chat_id = self.message.get('chat_id')
     
-    def reply(self, text: str, attachments: Optional[List[Dict[str, Any]]] = None) -> Dict[str, Any]:
+    def reply(self, text: str, attachments: Optional[List[Dict[str, Any]]] = None, keyboard: Optional[Any] = None) -> Dict[str, Any]:
         """
         Отправляет ответ на текущее сообщение/обновление
         
         Args:
             text: Текст сообщения
             attachments: Вложения сообщения
+            keyboard: Объект клавиатуры (будет добавлен к attachments)
             
         Returns:
             Информация об отправленном сообщении
@@ -69,10 +71,20 @@ class Context:
         if not chat_id:
             raise ValueError("Cannot reply without chat_id in context")
         
+        # Подготавливаем вложения
+        final_attachments = attachments.copy() if attachments else []
+        
+        # Если передана клавиатура, добавляем её как вложение
+        if keyboard:
+            if hasattr(keyboard, 'to_attachment'):
+                final_attachments.append(keyboard.to_attachment())
+            else:
+                final_attachments.append(keyboard)
+        
         return self.api.send_message(
             chat_id,
             text,
-            attachments
+            final_attachments
         )
     
     def _get_chat_id(self) -> Optional[int]:
@@ -111,4 +123,29 @@ class Context:
         return self.api.answer_callback(
             self.callback_id,
             text
-        ) 
+        )
+    
+    def reply_callback(self, text: str, attachments: Optional[List[Dict[str, Any]]] = None, 
+                         keyboard: Optional[Any] = None, 
+                         notification: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Отправляет ответ на callback и новое сообщение пользователю
+        
+        Args:
+            text: Текст сообщения для пользователя
+            attachments: Вложения сообщения
+            keyboard: Объект клавиатуры
+            notification: Текст уведомления для callback (если не указан, будет сгенерирован)
+            
+        Returns:
+            Информация об отправленном сообщении
+        """
+        # Если не указан текст уведомления, генерируем его на основе payload и timestamp
+        if notification is None:
+            notification = f"Обработка запроса {self.payload}_{int(time.time())}"
+        
+        # Отправляем ответ на callback
+        self.answer_callback(notification)
+        
+        # Отправляем обычное сообщение пользователю
+        return self.reply(text, attachments, keyboard) 
