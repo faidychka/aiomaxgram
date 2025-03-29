@@ -124,6 +124,7 @@ sessions.json
 
 # tests
 ping_bot_test.py
+keyboard_bot_test.py
 
 # PyPi
 .pypirc

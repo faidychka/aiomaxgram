@@ -70,6 +70,33 @@ class Api:
         
         return self.client.request("POST", "/messages", params=params, data=data)
     
+    def edit_message(self, message_id: str, text: str, attachments: Optional[List[Dict[str, Any]]] = None) -> Dict[str, Any]:
+        """
+        Редактирует существующее сообщение
+        
+        Args:
+            message_id: Идентификатор сообщения
+            text: Новый текст сообщения
+            attachments: Новые вложения сообщения
+            
+        Returns:
+            Информация об отредактированном сообщении
+        """
+        # Параметры запроса
+        params = {
+            "message_id": message_id
+        }
+        
+        # Тело запроса
+        data = {
+            "text": text
+        }
+        
+        if attachments:
+            data["attachments"] = attachments
+        
+        return self.client.request("PUT", "/messages", params=params, data=data)
+    
     def answer_callback(self, callback_id: str, text: Optional[str] = None) -> Dict[str, Any]:
         """
         Отправляет ответ на колбэк

@@ -172,7 +172,7 @@ class Bot:
             command_parts = text[1:].split(" ", 1)
             command = command_parts[0].lower()
             
-            logger.info(f"Received command: /{command}")
+            logger.debug(f"Received command: /{command}")
             
             # Вызываем обработчики команды
             handlers = self.command_handlers.get(command, [])

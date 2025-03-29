@@ -1,5 +1,5 @@
 # Maxgram
-v0.1.2 (28.03.2025)
+v0.1.3 (29.03.2025)
 
 Неофициальный Python клиент для [API MAX](https://dev.max.ru/)
 
@@ -72,19 +72,79 @@ bot.set_my_commands({
 
 Примечание: функционал подсказок сейчас может не работать на десктопном клиенте
 
-### Обработка ошибок
-Если во время обработки события произойдёт ошибка, Bot вызовет метод `bot.handle_error`. По умолчанию `bot.handle_error` просто выводит ошибку в консоль и продолжает работу, но вы можете переопределить это поведение, используя `bot.catch`.
+### Работа с клавиатурой
 
-> Завершайте работу программы при неизвестных ошибках, иначе бот может зависнуть в состоянии ошибки.
+* Полный пример смотрите [keyboard_bot.py](https://github.com/kayumovru/maxgram/tree/master/keyboard_bot.py)
 
-## Больше документаций и примеров
+#### Создание клавиатуры
 
-* [Документация](https://github.com/kayumovru/maxgram/tree/master/docs)
+* Поддерживаются инлайн-кнопки, иимпортируйте InlineKeyboard из библиотеки
+* Для формирования клавиатуры передайте списки, где каждый список - это одна строка кнопок. Внутри строки кнопок располагаются словари с названием и уникальным тегом кнопки. Callback - обычная кнопка, url - кнопка ссылка
+* Количество кнопок в строке по количеству словарей. При этом ширина кнопок делится поровну
+* Для отправки клавиатуры в сообщении просто передайте параметр keyboard в reply c названием клавиатуры
+
+```python
+from maxgram.keyboards import InlineKeyboard
+
+# Создание клавиатуры
+main_keyboard = InlineKeyboard(
+    [
+        {"text": "Отправить новое сообщение", "callback": "button1"},
+    ],
+    [ 
+        {"text": "Изменить сообщение", "callback": "button2"},
+        {"text": "Показать Назад", "callback": "button3"}
+    ],
+    [
+        {"text": "Открыть ссылку", "url": "https://pypi.org/project/maxgram/"}
+    ]
+)
+
+# Отправить клавиатуру по команде '/keyboard'
+@bot.command("keyboard")
+def keyboard_command(context):
+    context.reply(
+        "Вот клавиатура. Выбери одну из опций:",
+        keyboard=main_keyboard
+    )
+
+```
+
+#### Обработка нажатий на кнопки
+
+* Примите уникальные теги кнопок из .payload и отвечайте с помощью .reply_callback
+* Можно передавать новые клавиатуры в сообщениях
+* Укажите параметр is_current=True, чтобы изменить текущее сообщение, а не отправлять новое
+
+```python
+# Обработчик нажатий на кнопки
+@bot.on("message_callback")
+def handle_callback(context):
+    
+    button = context.payload
+    
+    if button == "button1":
+        context.reply_callback("Вы отправили новое сообщение")
+    elif button == "button2":
+        context.reply_callback("Вы изменили текущее сообщение", is_current=True)
+    elif button == "button3":
+        context.reply_callback("Вы изменили текущее сообщение с новой клавиатурой", 
+                          keyboard=InlineKeyboard(
+                              [{"text": "Вернуться к меню", "callback": "back_to_menu"}]
+                          ),
+                          is_current=True)
+    elif button == "back_to_menu":
+        context.reply_callback(
+            "Вернемся к основному меню", 
+            keyboard=main_keyboard,
+            is_current=True
+        )
+```
+
+## Больше документации и примеров
+
+* (в разработке) [Документация](https://github.com/kayumovru/maxgram/tree/master/docs)
 
 * [Примеры](https://github.com/kayumovru/maxgram/tree/master/examples)
 
-## Для разработчиков
-
-* Пожалуйста, все изменения делайте для ветки test
-
-> В core/client.py смените уровень логирования с INFO до DEBUG
+* [Для разработчиков](https://github.com/kayumovru/maxgram/tree/master/docs_dev)

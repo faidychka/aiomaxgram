@@ -127,19 +127,23 @@ class Context:
     
     def reply_callback(self, text: str, attachments: Optional[List[Dict[str, Any]]] = None, 
                          keyboard: Optional[Any] = None, 
-                         notification: Optional[str] = None) -> Dict[str, Any]:
+                         notification: Optional[str] = None,
+                         is_current: bool = False) -> Dict[str, Any]:
         """
-        Отправляет ответ на callback и новое сообщение пользователю
+        Отправляет ответ на callback и новое сообщение пользователю или редактирует текущее
         
         Args:
             text: Текст сообщения для пользователя
             attachments: Вложения сообщения
             keyboard: Объект клавиатуры
             notification: Текст уведомления для callback (если не указан, будет сгенерирован)
+            is_current: Если True, редактирует текущее сообщение вместо отправки нового
             
         Returns:
-            Информация об отправленном сообщении
+            Информация об отправленном или отредактированном сообщении
         """
+        logger = logging.getLogger(__name__)
+        
         # Если не указан текст уведомления, генерируем его на основе payload и timestamp
         if notification is None:
             notification = f"Обработка запроса {self.payload}_{int(time.time())}"
@@ -147,5 +151,56 @@ class Context:
         # Отправляем ответ на callback
         self.answer_callback(notification)
         
-        # Отправляем обычное сообщение пользователю
-        return self.reply(text, attachments, keyboard) 
+        # Подготавливаем вложения
+        final_attachments = attachments.copy() if attachments else []
+        
+        # Если передана клавиатура, добавляем её как вложение
+        if keyboard:
+            if hasattr(keyboard, 'to_attachment'):
+                final_attachments.append(keyboard.to_attachment())
+            else:
+                final_attachments.append(keyboard)
+        
+        # Если нужно редактировать текущее сообщение
+        if is_current:
+            # Логируем обновление для отладки
+            logger.debug(f"Attempting to edit message, callback structure: {self.update}")
+            
+            # Пытаемся получить ID сообщения из разных мест структуры обновления
+            message_id = None
+            
+            # Проверяем наличие сообщения в колбэке
+            if 'callback' in self.update and 'message' in self.update['callback']:
+                callback_message = self.update['callback']['message']
+                if 'body' in callback_message and 'mid' in callback_message['body']:
+                    message_id = callback_message['body']['mid']
+                    logger.debug(f"Found message_id in callback->message->body->mid: {message_id}")
+                elif 'message_id' in callback_message:
+                    message_id = callback_message['message_id']
+                    logger.debug(f"Found message_id in callback->message->message_id: {message_id}")
+            
+            # Если сообщение не найдено в колбэке, проверяем корень обновления
+            if not message_id and 'message' in self.update:
+                if 'body' in self.update['message'] and 'mid' in self.update['message']['body']:
+                    message_id = self.update['message']['body']['mid']
+                    logger.debug(f"Found message_id in message->body->mid: {message_id}")
+                elif 'message_id' in self.update['message']:
+                    message_id = self.update['message']['message_id']
+                    logger.debug(f"Found message_id in message->message_id: {message_id}")
+            
+            if message_id:
+                logger.debug(f"Editing message with ID: {message_id}")
+                try:
+                    return self.api.edit_message(message_id, text, final_attachments)
+                except Exception as e:
+                    logger.error(f"Error editing message: {e}")
+                    # В случае ошибки отправляем новое сообщение
+                    logger.debug("Falling back to sending a new message")
+                    return self.reply(text, attachments, keyboard)
+            else:
+                logger.warning("Could not find message_id for editing, sending new message instead")
+                # Если не удалось получить ID сообщения, отправляем новое
+                return self.reply(text, attachments, keyboard)
+        else:
+            # Отправляем обычное сообщение пользователю
+            return self.reply(text, attachments, keyboard) 

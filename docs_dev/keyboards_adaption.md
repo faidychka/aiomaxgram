@@ -37,6 +37,7 @@
 1. Создали класс `InlineKeyboard` в модуле `maxgram.keyboards`
 2. Реализовали метод `reply_callback` в классе `Context` для объединения двух операций в одну
 3. Добавили параметр `keyboard` в метод `reply` для упрощения отправки клавиатур
+4. Добавили возможность редактирования текущего сообщения вместо отправки нового
 
 ## Улучшения в деталях
 
@@ -90,14 +91,27 @@ def reply(self, text: str, attachments: Optional[List[Dict[str, Any]]] = None, k
 
 ```python
 def reply_callback(self, text: str, attachments: Optional[List[Dict[str, Any]]] = None, 
-                  keyboard: Optional[Any] = None, notification: Optional[str] = None)
+                  keyboard: Optional[Any] = None, notification: Optional[str] = None,
+                  is_current: bool = False)
 ```
 
 Этот метод автоматически:
 1. Отправляет ответ на колбэк через `answer_callback`
-2. Отправляет новое сообщение через `reply`
+2. В зависимости от значения `is_current`:
+   - Если `is_current=False` (по умолчанию) - отправляет новое сообщение через `reply`
+   - Если `is_current=True` - редактирует текущее сообщение, к которому привязан колбэк
 
 Если текст уведомления для колбэка не указан, он генерируется автоматически на основе payload и текущего времени.
+
+### 4. Редактирование существующего сообщения
+
+Добавлен метод `edit_message` в класс `Api`, который позволяет редактировать существующее сообщение:
+
+```python
+def edit_message(self, message_id: str, text: str, attachments: Optional[List[Dict[str, Any]]] = None)
+```
+
+Этот метод используется внутри `reply_callback` для обновления существующего сообщения при `is_current=True`.
 
 ## Примеры использования
 
@@ -132,9 +146,35 @@ def handle_callback(ctx):
     button = ctx.payload
     
     if button == "button1":
+        # Отправка нового сообщения
         ctx.reply_callback("Вы выбрали первую опцию")
-    elif button == "button2":
-        ctx.reply_callback("Вы выбрали вторую опцию", keyboard=another_keyboard)
+    elif button == "back_to_menu":
+        # Редактирование текущего сообщения при возврате в меню
+        ctx.reply_callback("Вернемся к основному меню", 
+                           keyboard=main_keyboard,
+                           is_current=True)
+```
+
+### Создание интерактивного многоуровневого меню
+
+```python
+@bot.on("message_callback")
+def handle_menu(ctx):
+    button = ctx.payload
+    
+    if button == "show_submenu":
+        # Показываем подменю, заменяя текущее сообщение
+        ctx.reply_callback("Выберите опцию из подменю:", 
+                          keyboard=submenu_keyboard,
+                          is_current=True)
+    elif button == "back":
+        # Возвращаемся в основное меню, редактируя текущее сообщение
+        ctx.reply_callback("Основное меню:", 
+                          keyboard=main_keyboard,
+                          is_current=True)
+    elif button.startswith("option_"):
+        # Для некоторых опций лучше отправить новое сообщение, а не редактировать текущее
+        ctx.reply_callback(f"Вы выбрали опцию: {button}")
 ```
 
 ## Миграция с предыдущего API
@@ -163,6 +203,9 @@ ctx.reply("Сообщение", keyboard=keyboard)
 ctx.answer_callback("Уведомление")
 ctx.reply("Ответное сообщение")
 
-# Новый способ
+# Новый способ (отправка нового сообщения)
 ctx.reply_callback("Ответное сообщение", notification="Уведомление")
+
+# Новый способ (редактирование текущего сообщения)
+ctx.reply_callback("Измененное сообщение", keyboard=new_keyboard, is_current=True)
 ``` 

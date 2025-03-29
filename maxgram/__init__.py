@@ -9,5 +9,5 @@ from maxgram.api import Api
 from maxgram.context import Context
 from maxgram.keyboards import InlineKeyboard
 
-__version__ = "0.1.2"
+__version__ = "0.1.3"
 __all__ = ["Bot", "Api", "Context", "InlineKeyboard"] 
