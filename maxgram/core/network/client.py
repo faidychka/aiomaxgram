@@ -2,7 +2,7 @@
 Базовый HTTP-клиент для API Max
 """
 
-import requests
+import aiohttp
 from typing import Dict, Any, Optional, Union, List
 import json
 import logging
@@ -25,7 +25,7 @@ class Client:
         """
         self.token = token
         self.options = client_options or {}
-        self.session = requests.Session()
+        self.session = None
     
     def _build_url(self, path: str) -> str:
         """
@@ -44,7 +44,7 @@ class Client:
             url += f"?access_token={self.token}"
         return url
     
-    def request(self, method: str, path: str, params: Optional[Dict[str, Any]] = None, 
+    async def request(self, method: str, path: str, params: Optional[Dict[str, Any]] = None, 
                 data: Optional[Dict[str, Any]] = None, files: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """
         Выполняет запрос к API
@@ -68,9 +68,11 @@ class Client:
             "User-Agent": f"MaxgramPython/0.1.0",
         }
         
+        # Подготовка данных для JSON
+        json_data = None
         if data and not files:
             headers["Content-Type"] = "application/json"
-            data = json.dumps(data)
+            json_data = data
         
         logger.debug(f"Request: {method} {url}")
         if params:
@@ -78,31 +80,42 @@ class Client:
         if data:
             logger.debug(f"Data: {data}")
         
-        response = self.session.request(
-            method=method,
-            url=url,
-            params=params,
-            data=data,
-            files=files,
-            headers=headers,
-            timeout=self.options.get("timeout", 60)
-        )
+        # Создаем сессию, если она еще не создана
+        if self.session is None:
+            self.session = aiohttp.ClientSession()
         
         try:
-            response.raise_for_status()
-            result = response.json()
-            logger.debug(f"Response: {result}")
-            return result
-        except requests.exceptions.HTTPError as e:
-            error_text = f"HTTP error: {e}"
-            try:
-                error_json = response.json()
-                error_text = f"{error_text}, API response: {error_json}"
-            except:
-                error_text = f"{error_text}, Response text: {response.text}"
+            timeout = aiohttp.ClientTimeout(total=self.options.get("timeout", 60))
             
+            async with self.session.request(
+                method=method,
+                url=url,
+                params=params,
+                json=json_data,
+                data=None if json_data else data,
+                headers=headers,
+                timeout=timeout
+            ) as response:
+                # Проверка статуса ответа
+                if response.status >= 400:
+                    error_text = f"HTTP error: {response.status} {response.reason}"
+                    try:
+                        error_json = await response.json()
+                        error_text = f"{error_text}, API response: {error_json}"
+                    except:
+                        error_text = f"{error_text}, Response text: {await response.text()}"
+                    
+                    logger.error(error_text)
+                    raise Exception(error_text)
+                
+                result = await response.json()
+                logger.debug(f"Response: {result}")
+                return result
+                
+        except aiohttp.ClientError as e:
+            error_text = f"Request error: {e}"
             logger.error(error_text)
             raise Exception(error_text)
         except Exception as e:
             logger.error(f"Request error: {e}")
-            raise 
+            raise

@@ -54,7 +54,7 @@ class Polling:
                 
                 for update in updates:
                     try:
-                        handler(update)
+                        await handler(update)
                     except Exception as e:
                         logger.error(f"Error handling update: {e}")
                 
@@ -76,10 +76,10 @@ class Polling:
         if self.marker is not None:
             params["marker"] = self.marker
         
-        updates_data = await asyncio.to_thread(
-            self.api.get_updates,
+        # Вызываем асинхронный метод API напрямую
+        updates_data = await self.api.get_updates(
             self.allowed_updates or [],
             params
         )
         
-        return updates_data 
+        return updates_data

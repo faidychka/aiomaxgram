@@ -55,7 +55,7 @@ class Context:
             elif self.message and 'chat_id' in self.message:
                 self.chat_id = self.message.get('chat_id')
     
-    def reply(self, text: str, attachments: Optional[List[Dict[str, Any]]] = None, keyboard: Optional[Any] = None) -> Dict[str, Any]:
+    async def reply(self, text: str, attachments: Optional[List[Dict[str, Any]]] = None, keyboard: Optional[Any] = None) -> Dict[str, Any]:
         """
         Отправляет ответ на текущее сообщение/обновление
         
@@ -81,7 +81,7 @@ class Context:
             else:
                 final_attachments.append(keyboard)
         
-        return self.api.send_message(
+        return await self.api.send_message(
             chat_id,
             text,
             final_attachments
@@ -107,7 +107,7 @@ class Context:
                 
         return None
     
-    def answer_callback(self, text: Optional[str] = None) -> Dict[str, Any]:
+    async def answer_callback(self, text: Optional[str] = None) -> Dict[str, Any]:
         """
         Отправляет ответ на колбэк-запрос
         
@@ -120,12 +120,12 @@ class Context:
         if not self.callback_id:
             raise ValueError("Cannot answer callback without callback_id in context")
             
-        return self.api.answer_callback(
+        return await self.api.answer_callback(
             self.callback_id,
             text
         )
     
-    def reply_callback(self, text: str, attachments: Optional[List[Dict[str, Any]]] = None, 
+    async def reply_callback(self, text: str, attachments: Optional[List[Dict[str, Any]]] = None, 
                          keyboard: Optional[Any] = None, 
                          notification: Optional[str] = None,
                          is_current: bool = False) -> Dict[str, Any]:
@@ -149,7 +149,7 @@ class Context:
             notification = f"Обработка запроса {self.payload}_{int(time.time())}"
         
         # Отправляем ответ на callback
-        self.answer_callback(notification)
+        await self.answer_callback(notification)
         
         # Подготавливаем вложения
         final_attachments = attachments.copy() if attachments else []
@@ -191,16 +191,16 @@ class Context:
             if message_id:
                 logger.debug(f"Editing message with ID: {message_id}")
                 try:
-                    return self.api.edit_message(message_id, text, final_attachments)
+                    return await self.api.edit_message(message_id, text, final_attachments)
                 except Exception as e:
                     logger.error(f"Error editing message: {e}")
                     # В случае ошибки отправляем новое сообщение
                     logger.debug("Falling back to sending a new message")
-                    return self.reply(text, attachments, keyboard)
+                    return await self.reply(text, attachments, keyboard)
             else:
                 logger.warning("Could not find message_id for editing, sending new message instead")
                 # Если не удалось получить ID сообщения, отправляем новое
-                return self.reply(text, attachments, keyboard)
+                return await self.reply(text, attachments, keyboard)
         else:
             # Отправляем обычное сообщение пользователю
-            return self.reply(text, attachments, keyboard) 
+            return await self.reply(text, attachments, keyboard) 

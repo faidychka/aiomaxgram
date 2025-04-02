@@ -22,16 +22,16 @@ class Api:
         """
         self.client = Client(token, client_options)
     
-    def get_my_info(self) -> Dict[str, Any]:
+    async def get_my_info(self) -> Dict[str, Any]:
         """
         Получает информацию о текущем боте
         
         Returns:
             Информация о боте
         """
-        return self.client.request("GET", "/me")
+        return await self.client.request("GET", "/me")
     
-    def set_my_commands(self, commands: List[Dict[str, str]]) -> Dict[str, Any]:
+    async def set_my_commands(self, commands: List[Dict[str, str]]) -> Dict[str, Any]:
         """
         Устанавливает команды для бота через PATCH /me
         
@@ -41,9 +41,9 @@ class Api:
         Returns:
             Результат запроса PATCH /me
         """
-        return self.client.request("PATCH", "/me", data={"commands": commands})
+        return await self.client.request("PATCH", "/me", data={"commands": commands})
     
-    def send_message(self, chat_id: int, text: str, attachments: Optional[List[Dict[str, Any]]] = None) -> Dict[str, Any]:
+    async def send_message(self, chat_id: int, text: str, attachments: Optional[List[Dict[str, Any]]] = None) -> Dict[str, Any]:
         """
         Отправляет сообщение в чат
         
@@ -68,9 +68,9 @@ class Api:
         if attachments:
             data["attachments"] = attachments
         
-        return self.client.request("POST", "/messages", params=params, data=data)
+        return await self.client.request("POST", "/messages", params=params, data=data)
     
-    def edit_message(self, message_id: str, text: str, attachments: Optional[List[Dict[str, Any]]] = None) -> Dict[str, Any]:
+    async def edit_message(self, message_id: str, text: str, attachments: Optional[List[Dict[str, Any]]] = None) -> Dict[str, Any]:
         """
         Редактирует существующее сообщение
         
@@ -95,9 +95,9 @@ class Api:
         if attachments:
             data["attachments"] = attachments
         
-        return self.client.request("PUT", "/messages", params=params, data=data)
+        return await self.client.request("PUT", "/messages", params=params, data=data)
     
-    def answer_callback(self, callback_id: str, text: Optional[str] = None) -> Dict[str, Any]:
+    async def answer_callback(self, callback_id: str, text: Optional[str] = None) -> Dict[str, Any]:
         """
         Отправляет ответ на колбэк
         
@@ -118,7 +118,7 @@ class Api:
         if text:
             data["notification"] = text
         
-        return self.client.request("POST", "/answers", params=params, data=data)
+        return await self.client.request("POST", "/answers", params=params, data=data)
     
     def get_updates(self, allowed_updates: List[str], extra: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """

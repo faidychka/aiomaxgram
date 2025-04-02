@@ -4,7 +4,7 @@
 
 import asyncio
 import logging
-from typing import Dict, Any, List, Optional, Callable, Union, Type
+from typing import Dict, Any, List, Optional, Callable, Union, Type, Awaitable
 import functools
 import re
 import json
@@ -17,7 +17,8 @@ from maxgram.core.network.polling import Polling
 logger = logging.getLogger(__name__)
 
 # Типы обработчиков
-HandlerFunc = Callable[[Context], None]
+# Change handler type to support async functions
+HandlerFunc = Callable[[Context], Awaitable[None]]
 
 
 class Bot:
@@ -119,7 +120,7 @@ class Bot:
         
         self.is_running = False
     
-    def _process_update(self, update: Dict[str, Any]):
+    async def _process_update(self, update: Dict[str, Any]):
         """
         Обрабатывает входящее обновление
         
@@ -127,67 +128,61 @@ class Bot:
             update: Данные обновления
         """
         try:
-            # Логируем структуру обновления для диагностики
             logger.debug(f"Received update: {json.dumps(update, ensure_ascii=False)}")
             
             update_type = update.get("update_type")
-            
             context = Context(update, self.api)
             
             # Вызываем общие обработчики
             for handler in self.handlers.get("update", []):
-                handler(context)
+                await handler(context)
             
             # Вызываем обработчики для конкретного типа обновления
             for handler in self.handlers.get(update_type, []):
-                handler(context)
+                await handler(context)
             
             # Обрабатываем сообщения особым образом
             if update_type == UpdateType.MESSAGE_CREATED and "message" in update:
-                self._process_message(context)
+                await self._process_message(context)
                 
         except Exception as e:
-            self.handle_error(e, update)
-    
-    def _process_message(self, context: Context):
+            await self.handle_error(e, update)
+
+    async def _process_message(self, context: Context):
         """
         Обрабатывает входящее сообщение
         
         Args:
             context: Контекст обновления
         """
-        # Проверяем, что есть сообщение и тело сообщения
         if not context.message:
             return
             
-        # Извлекаем текст из сообщения
         message_body = context.message.get("body", {})
         if not message_body or "text" not in message_body:
             return
             
         text = message_body["text"]
         
-        # Проверяем, является ли сообщение командой
         if text.startswith("/"):
             command_parts = text[1:].split(" ", 1)
             command = command_parts[0].lower()
             
             logger.debug(f"Received command: /{command}")
             
-            # Вызываем обработчики команды
             handlers = self.command_handlers.get(command, [])
             if handlers:
                 for handler in handlers:
-                    handler(context)
+                    await handler(context)
             else:
                 logger.debug(f"No handler found for command: /{command}")
                 
         # Проверяем обработчики текста
         for pattern, handler in self.text_handlers:
             if pattern == text or re.search(pattern, text):
-                handler(context)
-                
-    def handle_error(self, error: Exception, update: Dict[str, Any]):
+                await handler(context)
+
+    async def handle_error(self, error: Exception, update: Dict[str, Any]):
         """
         Обрабатывает ошибку при обработке обновления
         
@@ -196,8 +191,8 @@ class Bot:
             update: Данные обновления
         """
         logger.error(f"Error while processing update: {error}", exc_info=True)
-        
-    def catch(self, handler: Callable[[Exception, Dict[str, Any]], None]):
+
+    def catch(self, handler: Callable[[Exception, Dict[str, Any]], Awaitable[None]]):
         """
         Устанавливает пользовательский обработчик ошибок
         
@@ -206,8 +201,8 @@ class Bot:
         """
         self.handle_error = handler
         return self
-        
-    def set_my_commands(self, commands: Dict[str, str]) -> Dict[str, Any]:
+
+    async def set_my_commands(self, commands: Dict[str, str]) -> Dict[str, Any]:
         """
         Устанавливает команды для бота в удобном формате
         
@@ -217,5 +212,6 @@ class Bot:
         Returns:
             Результат запроса PATCH /me
         """
-        commands_list = [{"name": name, "description": description} for name, description in commands.items()]
-        return self.api.set_my_commands(commands_list) 
+        commands_list = [{"name": name, "description": description} 
+                        for name, description in commands.items()]
+        return await self.api.set_my_commands(commands_list)
