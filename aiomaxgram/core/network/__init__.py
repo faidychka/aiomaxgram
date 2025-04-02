@@ -1,3 +1,3 @@
-from maxgram.core.network.client import Client
+from aiomaxgram.core.network.client import Client
 
 __all__ = ["Client"] 

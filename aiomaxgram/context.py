@@ -6,7 +6,7 @@ from typing import Dict, Any, Optional, List, Union
 import logging
 import time
 
-from maxgram.types import Update, Message, UpdateType
+from aiomaxgram.types import Update, Message, UpdateType
 
 
 class Context:

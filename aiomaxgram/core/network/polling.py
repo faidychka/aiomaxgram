@@ -7,7 +7,7 @@ import logging
 import time
 from typing import Callable, List, Optional, Dict, Any
 
-from maxgram.types import Update, UpdateType
+from aiomaxgram.types import Update, UpdateType
 
 logger = logging.getLogger(__name__)
 

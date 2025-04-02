@@ -65,7 +65,7 @@ class Client:
         url = self._build_url(path)
         
         headers = {
-            "User-Agent": f"MaxgramPython/0.1.0",
+            "User-Agent": f"aiomaxgramPython/0.1.0",
         }
         
         # Подготовка данных для JSON

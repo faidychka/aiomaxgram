@@ -3,7 +3,7 @@ API-клиент для работы с API Max
 """
 
 from typing import Dict, Any, List, Optional, Union
-from maxgram.core.network.client import Client
+from aiomaxgram.core.network.client import Client
 
 class Api:
     """

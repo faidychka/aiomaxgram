@@ -9,10 +9,10 @@ import functools
 import re
 import json
 
-from maxgram.api import Api
-from maxgram.context import Context
-from maxgram.types import UpdateType
-from maxgram.core.network.polling import Polling
+from aiomaxgram.api import Api
+from aiomaxgram.context import Context
+from aiomaxgram.types import UpdateType
+from aiomaxgram.core.network.polling import Polling
 
 logger = logging.getLogger(__name__)
 
