@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="aiomaxgram",
-    version="0.1.5.1",
+    version="0.1.5.2",
     packages=find_packages(),
     install_requires=[
         "requests>=2.31.0",
