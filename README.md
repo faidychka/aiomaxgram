@@ -1,7 +1,7 @@
 # Maxgram
-v0.1.4 от 29.03.2025
+v0.1.4 от 2.04.2025
 
-https://pypi.org/project/maxgram/
+https://pypi.org/project/aiomaxgram/
 
 Python-клиент (неофициальный) для [API MAX](https://dev.max.ru/)
 
@@ -15,13 +15,13 @@ Python-клиент (неофициальный) для [API MAX](https://dev.ma
 
 ### 1. Установка
 ```sh
-pip install maxgram
+pip install aiomaxgram
 ```
 
 если нужно обновление, то
 
 ```sh
-pip install maxgram --upgrade
+pip install aiomaxgram --upgrade
 ```
 
 
@@ -30,29 +30,30 @@ pip install maxgram --upgrade
 
 ### 3. Пример эхо-бота
 ```python
-from maxgram import Bot
+from aiomaxgram import Bot
+import asyncio
 
 # Инициализация бота (рекомендуется получать через .env)
 bot = Bot("YOUR_BOT_TOKEN")
 
 # Обработчик события запуска бота
 @bot.on("bot_started")
-def on_start(context):
-    context.reply("Привет! Отправь мне ping, чтобы сыграть в пинг-понг или скажи /hello")
+async def on_start(context):
+    await context.reply("Привет! Отправь мне ping, чтобы сыграть в пинг-понг или скажи /hello")
 
 # Обработчик для сообщения с текстом 'ping'
 @bot.hears("ping")
-def ping_handler(context):
-    context.reply("pong")
+async def ping_handler(context):
+    await context.reply("pong")
 
 # Обработчик команды '/hello'
 @bot.command("hello")
-def hello_handler(context):
-    context.reply("world")
+async def hello_handler(context):
+    await mcontext.reply("world")
 
 # Обработчик для всех остальных входящих сообщений
 @bot.on("message_created")
-def echo(context):
+async def echo(context):
     # Проверяем, что есть сообщение и тело сообщения
     if context.message and context.message.get("body") and "text" in context.message["body"]:
         # Получаем текст сообщения
@@ -60,32 +61,30 @@ def echo(context):
         
         # Проверяем, что это не команда и не специальные сообщения с обработчиками
         if not text.startswith("/") and text != "ping" and text != "hello":
-            context.reply(text)
+            await context.reply(text)
 
 # Запуск бота
 if __name__ == "__main__":
     try:
-        bot.run()
+        asyncio.run(bot.start())
     except KeyboardInterrupt:
-        bot.stop()
+        asyncio.run(bot.stop())
 ```
 
 ### 4. Установка подсказок для команд бота
 
 ```python
 # Установка команд бота
-bot.set_my_commands({
+import asyncio
+
+asyncio.run(bot.set_my_commands({
     "help": "Получить помощь",
     "ping": "Проверка работы бота",
     "hello": "Приветствие"
-})
+}))
 ```
 
 Примечание: функционал подсказок сейчас может не работать на десктопном клиенте
-
-### 5. Работа с клавиатурой
-
-* Полный пример смотрите [keyboard_bot.py](https://github.com/kayumovru/maxgram/tree/master/examples/keyboard_bot.py)
 
 ![menu_example](figures/menu_example.jpg)
 
@@ -97,7 +96,7 @@ bot.set_my_commands({
 * Для отправки клавиатуры в сообщении просто передайте параметр keyboard в reply c названием клавиатуры
 
 ```python
-from maxgram.keyboards import InlineKeyboard
+from aiomaxgram.keyboards import InlineKeyboard
 
 # Создание клавиатуры
 main_keyboard = InlineKeyboard(
@@ -109,14 +108,14 @@ main_keyboard = InlineKeyboard(
         {"text": "Показать Назад", "callback": "button3"}
     ],
     [
-        {"text": "Открыть ссылку", "url": "https://pypi.org/project/maxgram/"}
+        {"text": "Открыть ссылку", "url": "https://pypi.org/project/aiomaxgram/"}
     ]
 )
 
 # Отправить клавиатуру по команде '/keyboard'
 @bot.command("keyboard")
-def keyboard_command(context):
-    context.reply(
+async def keyboard_command(context):
+    await context.reply(
         "Вот клавиатура. Выбери одну из опций:",
         keyboard=main_keyboard
     )
@@ -132,32 +131,23 @@ def keyboard_command(context):
 ```python
 # Обработчик нажатий на кнопки
 @bot.on("message_callback")
-def handle_callback(context):
+async def handle_callback(context):
     
     button = context.payload
     
     if button == "button1":
-        context.reply_callback("Вы отправили новое сообщение")
+        await context.reply_callback("Вы отправили новое сообщение")
     elif button == "button2":
-        context.reply_callback("Вы изменили текущее сообщение", is_current=True)
+        await context.reply_callback("Вы изменили текущее сообщение", is_current=True)
     elif button == "button3":
-        context.reply_callback("Вы изменили текущее сообщение с новой клавиатурой", 
+        await context.reply_callback("Вы изменили текущее сообщение с новой клавиатурой", 
                           keyboard=InlineKeyboard(
                               [{"text": "Вернуться к меню", "callback": "back_to_menu"}]
                           ),
                           is_current=True)
     elif button == "back_to_menu":
-        context.reply_callback(
+        await context.reply_callback(
             "Вернемся к основному меню", 
             keyboard=main_keyboard,
             is_current=True
         )
-```
-
-## Больше документации и примеров
-
-* (в разработке) [Документация](https://github.com/kayumovru/maxgram/tree/master/docs)
-
-* [Примеры](https://github.com/kayumovru/maxgram/tree/master/examples)
-
-* [Для разработчиков](https://github.com/kayumovru/maxgram/tree/master/docs_dev)
