@@ -1,4 +1,4 @@
-# Maxgram
+# AIOMaxgram
 v0.1.4 от 2.04.2025
 
 https://pypi.org/project/aiomaxgram/
