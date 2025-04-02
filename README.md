@@ -49,7 +49,7 @@ async def ping_handler(context):
 # Обработчик команды '/hello'
 @bot.command("hello")
 async def hello_handler(context):
-    await mcontext.reply("world")
+    await context.reply("world")
 
 # Обработчик для всех остальных входящих сообщений
 @bot.on("message_created")
